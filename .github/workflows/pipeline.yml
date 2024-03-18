@@ -1,0 +1,44 @@
+name: Senaikemicroservice
+on:
+  push:
+    branches:
+      - master
+jobs:
+  deployment:
+    name: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: aws-configure
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
+
+      - name: install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: install terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: run terraform init
+        run: |
+          cd infrastructure 
+          terraform init
+      - name: terraform plan
+        run: |
+          cd infrastructure
+          terraform plan
+      - name: apply terraform
+        run: |
+          cd infrastructure
+          terraform apply
+      - name: update kubectl credentials
+        run: aws eks update-kubeconfig --name myapp-eks-cluster --region
+
+      - name: deploy cluster
+        run: kubectl apply -f complete-demo.yaml
